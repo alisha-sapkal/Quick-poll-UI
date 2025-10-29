@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { API_BASE, createPoll, fetchPolls, likePoll, votePoll } from './api.js';
+import { API_BASE, createPoll, fetchPolls, likePoll, votePoll, deletePoll } from './api.js';
 import PollCreateForm from './components/PollCreateForm.jsx';
 import PollList from './components/PollList.jsx';
 
@@ -27,9 +27,14 @@ export default function App() {
       const poll = JSON.parse(e.data);
       setPolls((prev) => prev.map((p) => (p._id === poll._id ? poll : p)));
     };
+    const onDeleted = (e) => {
+      const data = JSON.parse(e.data);
+      setPolls((prev) => prev.filter((p) => p._id !== data._id));
+    };
     es.addEventListener('pollCreated', onCreated);
     es.addEventListener('pollUpdated', onUpdated);
     es.addEventListener('pollLiked', onLiked);
+    es.addEventListener('pollDeleted', onDeleted);
     es.onerror = () => {
       // Let browser retry automatically; optional logging
     };
@@ -37,6 +42,7 @@ export default function App() {
       es.removeEventListener('pollCreated', onCreated);
       es.removeEventListener('pollUpdated', onUpdated);
       es.removeEventListener('pollLiked', onLiked);
+      es.removeEventListener('pollDeleted', onDeleted);
       es.close();
     };
   }, []);
@@ -62,6 +68,17 @@ export default function App() {
     await likePoll(id);
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await deletePoll(id);
+      setPolls((prev) => prev.filter((p) => p._id !== id));
+      toast.success('Poll deleted');
+    } catch (e) {
+      console.error('Delete poll failed:', e);
+      toast.error(e?.message || 'Failed to delete poll');
+    }
+  };
+
   return (
     <div className="container">
       <header>
@@ -76,7 +93,7 @@ export default function App() {
         </section>
         <section>
           <h2>Latest Polls</h2>
-          <PollList polls={polls} onVote={handleVote} onLike={handleLike} />
+          <PollList polls={polls} onVote={handleVote} onLike={handleLike} onDelete={handleDelete} />
         </section>
       </main>
     </div>

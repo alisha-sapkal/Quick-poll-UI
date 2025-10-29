@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function PollCard({ poll, onVote, onLike }) {
+export default function PollCard({ poll, onVote, onLike, onDelete }) {
   const totalVotes = poll.options.reduce((s, o) => s + (o.votes || 0), 0);
   return (
     <div className="card">
@@ -22,7 +22,10 @@ export default function PollCard({ poll, onVote, onLike }) {
         })}
       </div>
       <div className="card-footer">
-        <button className="like" onClick={() => onLike(poll._id)}>❤ {poll.likes}</button>
+        <div className="actions">
+          <button className="like" onClick={() => onLike(poll._id)}>❤ {poll.likes}</button>
+          <button className="danger" onClick={() => onDelete?.(poll._id)}>Delete</button>
+        </div>
         <span className="meta">{new Date(poll.createdAt).toLocaleString()}</span>
       </div>
     </div>

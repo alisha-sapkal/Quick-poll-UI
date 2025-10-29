@@ -71,3 +71,9 @@ export async function likePoll(id) {
   if (!res.ok) throw new Error('Failed to like');
   return res.json();
 }
+
+export async function deletePoll(id) {
+  const res = await fetch(`${API_BASE}/api/polls/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete poll');
+  return res.json();
+}
