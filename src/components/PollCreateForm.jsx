@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { health } from '../api.js';
+import { toast } from 'sonner';
 
-export default function PollCreateForm({ onCreate }) {
+export default function PollCreateForm({ onCreate, onNotify }) {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [loading, setLoading] = useState(false);
@@ -12,9 +14,25 @@ export default function PollCreateForm({ onCreate }) {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     const trimmed = options.map(o => o.trim()).filter(Boolean);
     if (!question.trim() || trimmed.length < 2) {
       setError('Enter a question and at least two options');
+      return;
+    }
+    // Quick preflight to avoid long waits when DB is down
+    try {
+      const status = await health({ timeoutMs: 1200 });
+      if (status?.db !== 'up') {
+        const msg = 'Database is unavailable. Please try again shortly.';
+        toast.error(msg);
+        setError(msg);
+        return;
+      }
+    } catch (e) {
+      const msg = 'Server is unreachable. Please try again shortly.';
+      toast.error(msg);
+      setError(msg);
       return;
     }
     setLoading(true);
@@ -23,6 +41,11 @@ export default function PollCreateForm({ onCreate }) {
       await onCreate({ question: question.trim(), options: trimmed });
       setQuestion('');
       setOptions(['', '']);
+      toast.success('Poll created successfully');
+    } catch (e) {
+      console.error('Create form submit error:', e);
+      setError(e?.message || 'Something went wrong creating the poll');
+      toast.error(e?.message || 'Failed to create poll');
     } finally {
       setLoading(false);
     }
@@ -45,7 +68,7 @@ export default function PollCreateForm({ onCreate }) {
       {error && <p className="error" role="alert">{error}</p>}
       <div className="actions">
         <button type="button" onClick={addOption}>Add option</button>
-        <button type="submit" disabled={loading || !question.trim() || options.map(o => o.trim()).filter(Boolean).length < 2}>Create</button>
+        <button type="submit" disabled={loading || !question.trim() || options.map(o => o.trim()).filter(Boolean).length < 2}>{loading ? 'Creating…' : 'Create'}</button>
       </div>
     </form>
   );
