@@ -43,6 +43,7 @@ export default function App() {
   const handleCreate = async (data) => {
     const created = await createPoll(data);
     if (!created?._id) throw new Error('Create failed');
+    setPolls((prev) => prev.some((p) => p._id === created._id) ? prev : [created, ...prev]);
   };
 
   const handleVote = async (id, optionIndex) => {

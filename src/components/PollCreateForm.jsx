@@ -4,6 +4,7 @@ export default function PollCreateForm({ onCreate }) {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const addOption = () => setOptions((o) => [...o, '']);
   const updateOption = (i, v) => setOptions((o) => o.map((x, idx) => idx === i ? v : x));
@@ -12,8 +13,12 @@ export default function PollCreateForm({ onCreate }) {
   const submit = async (e) => {
     e.preventDefault();
     const trimmed = options.map(o => o.trim()).filter(Boolean);
-    if (!question.trim() || trimmed.length < 2) return;
+    if (!question.trim() || trimmed.length < 2) {
+      setError('Enter a question and at least two options');
+      return;
+    }
     setLoading(true);
+    setError('');
     try {
       await onCreate({ question: question.trim(), options: trimmed });
       setQuestion('');
@@ -37,9 +42,10 @@ export default function PollCreateForm({ onCreate }) {
           </div>
         ))}
       </div>
+      {error && <p className="error" role="alert">{error}</p>}
       <div className="actions">
         <button type="button" onClick={addOption}>Add option</button>
-        <button type="submit" disabled={loading}>Create</button>
+        <button type="submit" disabled={loading || !question.trim() || options.map(o => o.trim()).filter(Boolean).length < 2}>Create</button>
       </div>
     </form>
   );
